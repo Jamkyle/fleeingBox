@@ -12,9 +12,11 @@ export default class Block {
     this.type = 'block'
   }
 
-  destroy(state){
+  destroy(state, bool){
     this.delete = true
-    this.addPoint()
+    if(bool && state.invincible)
+      this.addPoint(4,bool)
+    this.addPoint(1,bool)
 
 
     // this.position.y = 0
@@ -26,6 +28,9 @@ export default class Block {
   {
     if(!state.freeze)
       this.position.y +=1+this.speed
+    else
+      this.position.y +=this.speed*0.4
+
   }
 
   render(state){
@@ -38,7 +43,12 @@ export default class Block {
     context.save()
     context.translate(this.position.x, this.position.y)
     context.fillStyle = this.color
+    context.beginPath()
     context.fillRect(0, 0, this.size, this.heigth)
+    context.lineWidth = 2
+    context.strokeStyle = '#303030'
+    context.stroke()
+    context.closePath()
     context.restore()
   }
 

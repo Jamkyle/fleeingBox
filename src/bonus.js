@@ -7,13 +7,10 @@ export default class Bonus {
     this.position = props.position
     this.speed = props.speed
     this.size = props.size
-    this.effectCount = props.effectCount
     this.effect = props.effect
     this.action = props.effect.action
     this.heigth = props.size
     this.type = 'bonus'
-    this.timer = props.timer
-    this.pushEffect = props.pushEffect
   }
 
   destroy(state, bool){ //true if contact player
@@ -21,8 +18,7 @@ export default class Bonus {
       {
         // let stagEffect = state.stagEffect
         // let boolEffect= false, i = 0
-        this.effect.action(this.effect.name, this.timer)
-        this.effectCount()
+        this.effect.action(this.effect.name)
       }
     this.delete = true
   }
@@ -60,12 +56,13 @@ export default class Bonus {
     context.strokeStyle = this.setColor()
     context.stroke()
 
-    context.font = "20pt sans-serif"
+    context.font = "10pt sans-serif"
     context.fillStyle = '#fff'
-    context.fillText(this.effect.name, 0, 0)
+    context.fillText(this.effect.name, -(this.size*this.effect.name.length)/(this.effect.name.length), this.size*2)
     context.closePath()
 
     context.restore()
+    console.log();
   }
 
 }
