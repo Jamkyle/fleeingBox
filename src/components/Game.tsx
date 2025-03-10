@@ -7,6 +7,7 @@ import Block from "../entities/block";
 import Bonus, { effect } from "../entities/bonus";
 import { useGameStore } from "../store/gameStore";
 import Canvas from "./Canvas";
+import { randomColorHexa } from "../utils/color-utils";
 
 
 
@@ -52,7 +53,7 @@ const Game: React.FC = () => {
 
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keyup", handleKeyUp);
-    const players = Player(2);
+    const players = generatePlayers(2);
     setPlayers(players)
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
@@ -143,7 +144,7 @@ const Game: React.FC = () => {
     }
   }, [players]);
 
-  const Player = (n: number) => {
+  const generatePlayers = (n: number) => {
     const screenWidth = SCX.current || window.innerWidth;
     const screenHeight = SCY.current || window.innerHeight;
     const newPlayers = [];
@@ -159,7 +160,7 @@ const Game: React.FC = () => {
         die: (playerId) => handleGameOver(playerId),
         size: 50,
         name: "player" + i,
-        playerColor: "#FF2",
+        playerColor: randomColorHexa(),
         screenWidth: SCX.current,
         cmd: playerCMD[i]
       });
