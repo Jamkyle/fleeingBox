@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useRef, useCallback } from "react";
 import Status from "./Status";
 import Button from "./Button";
@@ -10,12 +11,8 @@ import Canvas from "./Canvas";
 import { generatePlayers } from "../utils/gameLoop";
 import { D, LEFT, Q, RIGHT } from "../utils/constants";
 
-
-
 const effects: Array<effect> = ["freeze", "speed", "invincible"];
 type Item = Block | Bonus | Perso;
-
-
 
 const Game: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -36,10 +33,10 @@ const Game: React.FC = () => {
     inGame,
     setInGame,
     setPlayers,
-    setScore
+    setScore,
   } = useGameStore();
 
-  const keysPressed = useRef<{ [key: number]: boolean }>({});
+  const keysPressed = useRef<Partial<Record<number, boolean>>>({});
   const blocks = useRef<Block[]>([]);
   const bonus = useRef<Bonus[]>([]);
   const inter = useRef<NodeJS.Timeout | null>(null);
@@ -54,7 +51,7 @@ const Game: React.FC = () => {
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keyup", handleKeyUp);
     const players = generatePlayers(2, canvasRef.current, ctx);
-    setPlayers(players)
+    setPlayers(players);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("keyup", handleKeyUp);
@@ -91,7 +88,7 @@ const Game: React.FC = () => {
       startGame();
       smoothMove();
     }
-  }, [players])
+  }, [players]);
 
   const startGame = useCallback(() => {
     inter.current = setInterval(() => {
@@ -134,9 +131,9 @@ const Game: React.FC = () => {
   }, [players]);
 
   const handleRestart = () => {
-    setScore(0)
-    setPlayers(generatePlayers(2, canvasRef.current, context.current))
-  }
+    setScore(0);
+    setPlayers(generatePlayers(2, canvasRef.current, context.current));
+  };
 
   const doBonus = (n: number) => {
     for (let i = 0; i < n; i++) {
@@ -178,7 +175,7 @@ const Game: React.FC = () => {
         if (moved) {
           player.update();
         }
-      })
+      });
     }
     requestAnimationFrame(smoothMove);
   }
@@ -232,14 +229,12 @@ const Game: React.FC = () => {
     if (timer) {
       clearTimeout(timer); // Ensures `clearTimeout` receives a valid argument
     }
-    effectTime.current[effect as effect] = setTimeout(
-      () => {
-        if (effect === "freeze") {
-          setFreeze(false);
-        }
-        return removeStagEffect(effect)
-      },
-      5000);
+    effectTime.current[effect as effect] = setTimeout(() => {
+      if (effect === "freeze") {
+        setFreeze(false);
+      }
+      return removeStagEffect(effect);
+    }, 5000);
   }, []);
 
   const isCollide = (obj1: Item, obj2: Item) => {

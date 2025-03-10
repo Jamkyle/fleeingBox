@@ -1,6 +1,6 @@
 import ScreenElement, { IScreenElement } from "./screenElement";
 
-type KeysParams = {
+export type KeysParams = {
   left: number;
   right: number;
 };
