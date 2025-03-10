@@ -4,21 +4,37 @@
   "description": "Describe fleeingBox here",
   "private": true,
   "scripts": {
-    "build": "nwb build",
-    "clean": "nwb clean",
-    "start": "nwb serve",
-    "test": "nwb test",
-    "test:watch": "nwb test --server"
+    "build": "next build",
+    "start": "next start",
+    "dev": "next dev",
+    "test": "next test",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write ."
   },
   "dependencies": {
-    "nwb-stylus": "^0.5.0",
-    "react": "0.14.x",
-    "react-dom": "0.14.x"
-  },
-  "devDependencies": {
-    "nwb": "0.9.x"
+    "next": "^15.2.1",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "sass": "^1.85.1",
+    "zustand": "^5.0.3"
   },
   "author": "",
   "license": "MIT",
-  "repository": ""
+  "repository": "",
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@types/node": "^22.13.9",
+    "@types/react": "^19.0.10",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.2.1",
+    "eslint-config-prettier": "^10.0.2",
+    "eslint-plugin-prettier": "^5.2.3",
+    "eslint-plugin-react": "^7.37.4",
+    "globals": "^16.0.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.5.3",
+    "prettier-eslint": "^16.1.2",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.0"
+  }
 }
