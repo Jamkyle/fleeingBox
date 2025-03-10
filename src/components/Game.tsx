@@ -7,16 +7,15 @@ import Block from "../entities/block";
 import Bonus, { effect } from "../entities/bonus";
 import { useGameStore } from "../store/gameStore";
 import Canvas from "./Canvas";
-import { randomColorHexa } from "../utils/color-utils";
+import { generatePlayers } from "../utils/gameLoop";
+import { D, LEFT, Q, RIGHT } from "../utils/constants";
 
 
 
 const effects: Array<effect> = ["freeze", "speed", "invincible"];
 type Item = Block | Bonus | Perso;
-const keys = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, Q: 81, D: 68 };
-const { LEFT, RIGHT, Q, D } = keys;
 
-const playerCMD = [{ left: LEFT, right: RIGHT }, { left: Q, right: D }]
+
 
 const Game: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -37,6 +36,7 @@ const Game: React.FC = () => {
     inGame,
     setInGame,
     setPlayers,
+    setScore
   } = useGameStore();
 
   const keysPressed = useRef<{ [key: number]: boolean }>({});
@@ -53,7 +53,7 @@ const Game: React.FC = () => {
 
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keyup", handleKeyUp);
-    const players = generatePlayers(2);
+    const players = generatePlayers(2, canvasRef.current, ctx);
     setPlayers(players)
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
@@ -93,18 +93,6 @@ const Game: React.FC = () => {
     }
   }, [players])
 
-  const handleGameOver = (playerId: string) => {
-    useGameStore.setState((state) => {
-      const remainingPlayers = state.players.filter((p) => p.name !== playerId);
-      if (remainingPlayers.length === 0) {
-        return { players: [], gameOver: true };
-      }
-      return { players: remainingPlayers };
-    });
-  };
-
-
-
   const startGame = useCallback(() => {
     inter.current = setInterval(() => {
       if (Math.random() * 100 < 40) doBonus(1);
@@ -132,7 +120,8 @@ const Game: React.FC = () => {
   );
 
   const update = useCallback(() => {
-    if (!gameOver && context.current) {
+    if (useGameStore.getState().gameOver) return;
+    if (context.current) {
       context.current.clearRect(0, 0, SCX.current, SCY.current);
       updateObjects(blocks.current);
       updateObjects(bonus.current);
@@ -144,30 +133,10 @@ const Game: React.FC = () => {
     }
   }, [players]);
 
-  const generatePlayers = (n: number) => {
-    const screenWidth = SCX.current || window.innerWidth;
-    const screenHeight = SCY.current || window.innerHeight;
-    const newPlayers = [];
-    for (let i = 0; i < n; i++) {
-      const player = new Perso({
-        position: {
-          x:
-            screenWidth / 2 +
-            i * 10,
-          y: screenHeight - 50,
-        },
-        speed: 3,
-        die: (playerId) => handleGameOver(playerId),
-        size: 50,
-        name: "player" + i,
-        playerColor: randomColorHexa(),
-        screenWidth: SCX.current,
-        cmd: playerCMD[i]
-      });
-      newPlayers.push(player);
-    }
-    return newPlayers
-  };
+  const handleRestart = () => {
+    setScore(0)
+    setPlayers(generatePlayers(2, canvasRef.current, context.current))
+  }
 
   const doBonus = (n: number) => {
     for (let i = 0; i < n; i++) {
@@ -288,7 +257,7 @@ const Game: React.FC = () => {
         <div className="gameover">
           <div className="inner">
             <p className="fnEnd">Game Over</p>
-            <Button startGame={startGame} title="Play Again" />
+            <Button startGame={handleRestart} title="Play Again" />
             <p>Your Score: {score}</p>
             <p className="best">Best Score: {bestScore}</p>
           </div>
