@@ -9,21 +9,23 @@ interface GameState {
   bestScore: number;
   freeze: boolean;
   invincible: boolean;
-  perso: Perso[]; // You can replace `any` with the actual type
+  players: Perso[]; // You can replace `any` with the actual type
   blocks: Block[];
   bonus: Bonus[];
   stagEffect: effect[];
+  inGame: boolean;
 
   setGameOver: (state: boolean) => void;
   setScore: (score: number) => void;
   addScore: (points: number) => void;
   setFreeze: (state: boolean) => void;
   setInvincible: (state: boolean) => void;
-  setPerso: (perso: Perso[]) => void;
+  setPlayers: (players: Perso[]) => void;
   setBlocks: (blocks: Block[]) => void;
   setBonus: (bonus: Bonus[]) => void;
   setStagEffect: (stagEffect: effect) => void;
   removeStagEffect: (stagEffect: effect) => void;
+  setInGame: (state: boolean) => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -35,10 +37,11 @@ export const useGameStore = create<GameState>((set) => ({
       : 0,
   freeze: false,
   invincible: false,
-  perso: [],
+  players: [],
   blocks: [],
   bonus: [],
   stagEffect: [],
+  inGame: false,
 
   setGameOver: (state) => set({ gameOver: state }),
   setScore: (score) => set({ score }),
@@ -55,9 +58,16 @@ export const useGameStore = create<GameState>((set) => ({
     }),
   setFreeze: (state) => set({ freeze: state }),
   setInvincible: (state) => set({ invincible: state }),
-  setPerso: (perso) => set({ perso }),
+  setPlayers: (players) => set({ players }),
   setBlocks: (blocks) => set({ blocks }),
   setBonus: (bonus) => set({ bonus }),
-  setStagEffect: (effect) => set((state) => ({ stagEffect: [...state.stagEffect, effect] })),
-  removeStagEffect: (effect) => set((state) => ({ stagEffect: state.stagEffect.filter((e) => e !== effect) })),
+  setStagEffect: (effect) =>
+    set((state) => ({
+      stagEffect: [...new Set([...state.stagEffect, effect])],
+    })),
+  removeStagEffect: (effect) =>
+    set((state) => ({
+      stagEffect: state.stagEffect.filter((e) => e !== effect),
+    })),
+  setInGame: (state) => set({ inGame: state }),
 }));

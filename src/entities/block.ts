@@ -1,5 +1,6 @@
 import Perso from "./perso";
 import ScreenElement, { IScreenElement } from "./screenElement";
+import { useGameStore } from "../store/gameStore";
 interface BlockProps extends IScreenElement {
   addPoint: (points: number, die: boolean) => void;
   color: string;
@@ -21,7 +22,7 @@ export default class Block extends ScreenElement {
   }
 
   update() {
-    if (!this.freezed) {
+    if (!useGameStore.getState().freeze) {
       this.position.y += this.speed;
     }
     if (this.position.y + this.size - 3 > window.innerHeight && !this.delete) {
@@ -37,7 +38,7 @@ export default class Block extends ScreenElement {
   }
 
   action(player: Perso) {
-    player.die();
+    player.destroy();
     this.destroy();
   }
 

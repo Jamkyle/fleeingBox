@@ -1,31 +1,50 @@
 import ScreenElement, { IScreenElement } from "./screenElement";
 
+type KeysParams = {
+  left: number;
+  right: number;
+};
+
 interface PersoProps extends IScreenElement {
   playerColor: string;
-  die: () => void;
+  die: (id: string) => void;
   name: string;
+  screenWidth: number;
+  cmd: KeysParams;
 }
 export default class Perso extends ScreenElement {
-  playerColor: string = "#f22";
+  playerColor = "#f22";
   delete: boolean;
-  die: () => void;
   velocity: number;
   name: string;
   screenWidth: number = 800;
   invincible: boolean = false;
+  die;
+  cmd: KeysParams;
 
-  constructor({ position, speed, size, playerColor, die, name }: PersoProps) {
+  constructor({
+    position,
+    speed,
+    size,
+    playerColor,
+    die,
+    name,
+    screenWidth,
+    cmd,
+  }: PersoProps) {
     super({ position, speed, size });
     this.playerColor = playerColor;
     this.delete = false;
     this.die = die;
     this.velocity = 0;
     this.name = name;
+    this.screenWidth = screenWidth;
+    this.cmd = cmd;
   }
 
   move(direction: "left" | "right") {
     const acceleration = 0.3 * this.speed; // How quickly it accelerates
-    const maxSpeed = this.speed * 6; // Limit max speed
+    const maxSpeed = this.speed * 3; // Limit max speed
 
     if (direction === "left") {
       this.velocity = Math.max(this.velocity - acceleration, -maxSpeed);
@@ -65,7 +84,9 @@ export default class Perso extends ScreenElement {
   }
 
   destroy() {
-    this.die();
-    this.delete = true;
+    if (!this.invincible) {
+      this.die(this.name);
+      this.delete = true;
+    }
   }
 }

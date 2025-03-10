@@ -8,10 +8,14 @@ import Bonus, { effect } from "../entities/bonus";
 import { useGameStore } from "../store/gameStore";
 import Canvas from "./Canvas";
 
+
+
 const effects: Array<effect> = ["freeze", "speed", "invincible"];
 type Item = Block | Bonus | Perso;
 const keys = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, Q: 81, D: 68 };
 const { LEFT, RIGHT, Q, D } = keys;
+
+const playerCMD = [{ left: LEFT, right: RIGHT }, { left: Q, right: D }]
 
 const Game: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -22,17 +26,19 @@ const Game: React.FC = () => {
     setGameOver,
     score,
     addScore,
-    freeze,
     setFreeze,
     invincible,
     bestScore,
     stagEffect,
     setStagEffect,
-    removeStagEffect
+    removeStagEffect,
+    players,
+    inGame,
+    setInGame,
+    setPlayers,
   } = useGameStore();
 
   const keysPressed = useRef<{ [key: number]: boolean }>({});
-  const perso = useRef<Perso[]>([]);
   const blocks = useRef<Block[]>([]);
   const bonus = useRef<Bonus[]>([]);
   const inter = useRef<NodeJS.Timeout | null>(null);
@@ -46,8 +52,8 @@ const Game: React.FC = () => {
 
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keyup", handleKeyUp);
-    startGame();
-    smoothMove();
+    const players = Player(2);
+    setPlayers(players)
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("keyup", handleKeyUp);
@@ -67,7 +73,7 @@ const Game: React.FC = () => {
         // Update SCX and SCY
         SCX.current = width;
         SCY.current = height;
-        perso.current.forEach((p) => p.setScreenWidth(width));
+        players.forEach((p) => p.setScreenWidth(width));
       }
     };
 
@@ -79,42 +85,42 @@ const Game: React.FC = () => {
     };
   }, []);
 
-  const handleGameOver = () => {
-    if (perso.current.length === 0) {
-      setGameOver(true);
+  useEffect(() => {
+    if (players.length > 0 && !inGame) {
+      startGame();
+      smoothMove();
     }
+  }, [players])
+
+  const handleGameOver = (playerId: string) => {
+    useGameStore.setState((state) => {
+      const remainingPlayers = state.players.filter((p) => p.name !== playerId);
+      if (remainingPlayers.length === 0) {
+        return { players: [], gameOver: true };
+      }
+      return { players: remainingPlayers };
+    });
   };
 
+
+
   const startGame = useCallback(() => {
-    const screenWidth = SCX.current || window.innerWidth;
-    const screenHeight = SCY.current || window.innerHeight;
     inter.current = setInterval(() => {
       if (Math.random() * 100 < 40) doBonus(1);
       doBlock(1);
     }, 2000);
-
+    setInGame(true);
     setGameOver(false);
-
-    perso.current = [
-      new Perso({
-        position: { x: screenWidth / 2, y: screenHeight - 100 },
-        name: "player 0",
-        speed: 3,
-        size: 50,
-        playerColor: "#FFF",
-        die: () => handleGameOver,
-      }),
-    ];
 
     blocks.current = [];
     bonus.current = [];
 
     requestAnimationFrame(update);
-  }, []);
+  }, [players]);
 
   const addPoint = useCallback(
     (point: number) => {
-      if (gameOver || invincible) {
+      if (!gameOver || invincible) {
         addScore(1 + point);
         if (score >= bestScore) {
           localStorage.setItem("bestScore", String(score));
@@ -127,35 +133,40 @@ const Game: React.FC = () => {
   const update = useCallback(() => {
     if (!gameOver && context.current) {
       context.current.clearRect(0, 0, SCX.current, SCY.current);
-
       updateObjects(blocks.current);
       updateObjects(bonus.current);
-      updateObjects(perso.current);
+      updateObjects(players);
 
-      checkCollisions(perso.current, blocks.current);
-      checkCollisions(perso.current, bonus.current);
+      checkCollisions(players, blocks.current);
+      checkCollisions(players, bonus.current);
       requestAnimationFrame(update);
     }
-  }, [freeze]);
+  }, [players]);
 
-  // const Player = (n: number) => {
-  //   for (let i = 0; i < n; i++) {
-  //     const player = new Perso({
-  //       position: {
-  //         x:
-  //           (canvasRef?.current?.getBoundingClientRect().width || 800) / 2 +
-  //           i * 10,
-  //         y: (canvasRef?.current?.getBoundingClientRect().height || 500) - 50,
-  //       },
-  //       speed: 3,
-  //       die: () => setGameOver(true),
-  //       size: 50,
-  //       name: "player" + i,
-  //       playerColor: "#FF2",
-  //     });
-  //     perso.current.push(player);
-  //   }
-  // };
+  const Player = (n: number) => {
+    const screenWidth = SCX.current || window.innerWidth;
+    const screenHeight = SCY.current || window.innerHeight;
+    const newPlayers = [];
+    for (let i = 0; i < n; i++) {
+      const player = new Perso({
+        position: {
+          x:
+            screenWidth / 2 +
+            i * 10,
+          y: screenHeight - 50,
+        },
+        speed: 3,
+        die: (playerId) => handleGameOver(playerId),
+        size: 50,
+        name: "player" + i,
+        playerColor: "#FF2",
+        screenWidth: SCX.current,
+        cmd: playerCMD[i]
+      });
+      newPlayers.push(player);
+    }
+    return newPlayers
+  };
 
   const doBonus = (n: number) => {
     for (let i = 0; i < n; i++) {
@@ -183,23 +194,27 @@ const Game: React.FC = () => {
   };
 
   function smoothMove() {
-    if (perso.current.length > 0) {
-      if (keysPressed.current[LEFT] || keysPressed.current[Q]) {
-        perso.current[0].move("left");
-      }
-      if (keysPressed.current[RIGHT] || keysPressed.current[D]) {
-        perso.current[0].move("right");
-      }
-      perso.current[0].update();
+    if (players.length > 0) {
+      players.forEach((player) => {
+        let moved = false;
+        if (keysPressed.current[player.cmd.left]) {
+          player.move("left");
+          moved = true;
+        }
+        if (keysPressed.current[player.cmd.right]) {
+          player.move("right");
+          moved = true;
+        }
+        if (moved) {
+          player.update();
+        }
+      })
     }
     requestAnimationFrame(smoothMove);
   }
 
   const updateObjects = (items: (Perso | Bonus | Block)[]) => {
     items.forEach((item: Perso | Bonus | Block) => {
-      if (item instanceof Block) {
-        item.freezed = freeze;
-      }
       item.update();
       if (!item.delete) {
         item.render({ context: context.current });
@@ -214,8 +229,9 @@ const Game: React.FC = () => {
           if (item instanceof Bonus && !item.collected) {
             addEffectInStag(item.effect);
           }
-          item.action(perso);
-          item.destroy();
+          if (!item.delete) {
+            item.action(perso);
+          }
         }
       });
     });
@@ -240,10 +256,10 @@ const Game: React.FC = () => {
       effectTime.current = {};
     }
     const timer = effectTime.current[effect];
+    if (effect === "freeze") {
+      setFreeze(true);
+    }
     if (timer) {
-      if (effect === "freeze") {
-        setFreeze(true);
-      }
       clearTimeout(timer); // Ensures `clearTimeout` receives a valid argument
     }
     effectTime.current[effect as effect] = setTimeout(
