@@ -1,29 +1,22 @@
 import Perso from "../entities/perso";
+import { useBonusStore } from "../store/bonusStore";
+import { useCanvasStore } from "../store/canvasStore";
 import { useGameStore } from "../store/gameStore";
 import { randomColorHexa } from "./color-utils";
 import { playerCMD } from "./constants";
 
-export type sizeScren = {
-  SCX: number;
-  SCY: number;
-};
-
-export const clearCanvas = (
-  ctx: CanvasRenderingContext2D | null,
-  size: sizeScren,
-) => {
-  if (ctx) {
-    ctx.clearRect(0, 0, size.SCX, size.SCY);
+export const clearCanvas = () => {
+  const { context, canvas } = useCanvasStore.getState();
+  if (context && canvas) {
+    context.clearRect(0, 0, canvas.width, canvas.height);
   }
 };
 
-export const generatePlayers = (
-  n: number,
-  canvas: HTMLCanvasElement | null,
-  ctx: CanvasRenderingContext2D | null,
-) => {
+export const generatePlayers = (n: number) => {
+  const { canvas } = useCanvasStore.getState();
   const screenWidth = canvas?.width || window.innerWidth;
   const screenHeight = canvas?.height || window.innerHeight;
+
   const newPlayers = [];
   for (let i = 0; i < n; i++) {
     const player = new Perso({
@@ -33,7 +26,7 @@ export const generatePlayers = (
       },
       speed: 3,
       die: (playerId) => {
-        handleGameOver(playerId, canvas, ctx);
+        handleGameOver(playerId);
       },
       size: 50,
       name: "player" + i,
@@ -43,20 +36,15 @@ export const generatePlayers = (
     });
     newPlayers.push(player);
   }
+  useBonusStore.getState().initStateEffect(newPlayers);
   return newPlayers;
 };
 
-export function handleGameOver(
-  playerId: string,
-  canvas: HTMLCanvasElement | null,
-  ctx: CanvasRenderingContext2D | null,
-) {
-  const screenWidth = canvas?.width || window.innerWidth;
-  const screenHeight = canvas?.height || window.innerHeight;
+export function handleGameOver(playerId: string) {
   useGameStore.setState((state) => {
     const remainingPlayers = state.players.filter((p) => p.name !== playerId);
     if (remainingPlayers.length === 0) {
-      clearCanvas(ctx, { SCX: screenWidth, SCY: screenHeight });
+      clearCanvas();
       return { players: [], gameOver: true, inGame: false };
     }
     return { players: remainingPlayers };

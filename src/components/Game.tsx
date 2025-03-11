@@ -10,6 +10,8 @@ import { useGameStore } from "../store/gameStore";
 import Canvas from "./Canvas";
 import { generatePlayers } from "../utils/gameLoop";
 import { D, LEFT, Q, RIGHT } from "../utils/constants";
+import { useCanvasStore } from "../store/canvasStore";
+import { useBonusStore } from "../store/bonusStore";
 
 const effects: Array<effect> = ["freeze", "speed", "invincible"];
 type Item = Block | Bonus | Perso;
@@ -18,16 +20,25 @@ const Game: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const context = useRef<CanvasRenderingContext2D | null>(null);
   const effectTime = useRef<Partial<Record<effect, NodeJS.Timeout | null>>>({});
+
+
+  const { setCanvas, setContext } = useCanvasStore();
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    setCanvas(canvasRef.current);
+    setContext(canvasRef.current.getContext("2d"));
+  }, []);
+
   const {
     gameOver,
     setGameOver,
     score,
     addScore,
+    freeze,
     setFreeze,
     invincible,
     bestScore,
-    stagEffect,
-    setStagEffect,
     removeStagEffect,
     players,
     inGame,
@@ -35,6 +46,8 @@ const Game: React.FC = () => {
     setPlayers,
     setScore,
   } = useGameStore();
+
+  const playersState = useBonusStore(state => state.playersState)
 
   const keysPressed = useRef<Partial<Record<number, boolean>>>({});
   const blocks = useRef<Block[]>([]);
@@ -50,8 +63,8 @@ const Game: React.FC = () => {
 
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("keyup", handleKeyUp);
-    const players = generatePlayers(2, canvasRef.current, ctx);
-    setPlayers(players);
+    const playersGenerated = generatePlayers(2);
+    setPlayers(playersGenerated);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("keyup", handleKeyUp);
@@ -92,8 +105,8 @@ const Game: React.FC = () => {
 
   const startGame = useCallback(() => {
     inter.current = setInterval(() => {
-      if (Math.random() * 100 < 40) doBonus(1);
-      doBlock(1);
+      if (Math.random() * 100 < 100) generateBonus(1);
+      generateBlock(1);
     }, 2000);
     setInGame(true);
     setGameOver(false);
@@ -120,6 +133,11 @@ const Game: React.FC = () => {
     if (useGameStore.getState().gameOver) return;
     if (context.current) {
       context.current.clearRect(0, 0, SCX.current, SCY.current);
+
+      blocks.current.forEach((block) => {
+        block.freezed = freeze
+      });
+
       updateObjects(blocks.current);
       updateObjects(bonus.current);
       updateObjects(players);
@@ -128,14 +146,14 @@ const Game: React.FC = () => {
       checkCollisions(players, bonus.current);
       requestAnimationFrame(update);
     }
-  }, [players]);
+  }, [players, freeze, playersState]);
 
   const handleRestart = () => {
     setScore(0);
-    setPlayers(generatePlayers(2, canvasRef.current, context.current));
+    setPlayers(generatePlayers(2));
   };
 
-  const doBonus = (n: number) => {
+  const generateBonus = (n: number) => {
     for (let i = 0; i < n; i++) {
       const b = new Bonus({
         position: { x: 1 + Math.random() * (SCX.current - 100), y: 0 },
@@ -147,7 +165,7 @@ const Game: React.FC = () => {
     }
   };
 
-  const doBlock = (n: number) => {
+  const generateBlock = (n: number) => {
     for (let i = 0; i < n; i++) {
       const block = new Block({
         position: { x: 1 + Math.random() * (SCX.current - 100), y: 0 },
@@ -218,7 +236,6 @@ const Game: React.FC = () => {
 
   const addEffectInStag = useCallback((effect: effect) => {
     // Afficher l'effet dans le statut du jeu
-    setStagEffect(effect);
     if (!effectTime.current) {
       effectTime.current = {};
     }
@@ -266,7 +283,7 @@ const Game: React.FC = () => {
         Best Score: {bestScore}
       </div>
       <div className="state">
-        <Status stagEffect={stagEffect} />
+        <Status />
       </div>
     </div>
   );

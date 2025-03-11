@@ -1,4 +1,4 @@
-import { shouldPlayerColorReset } from "../store/utils";
+import { useBonusStore } from "../store/bonusStore";
 import Perso from "./perso";
 import ScreenElement, { IScreenElement } from "./screenElement";
 export type effect = "freeze" | "speed" | "invincible";
@@ -53,29 +53,23 @@ export default class Bonus extends ScreenElement {
   action(player: Perso) {
     if (this.collected) return; // Prevent double activation
     this.collected = true;
-    player.playerColor = this.color;
     this.delete = true;
     switch (this.effect) {
       case "speed":
         player.speed *= 2;
-        return setTimeout(() => {
-          player.speed /= 2;
-          shouldPlayerColorReset(player);
-        }, 5000);
-
+        player.playerColor = this.color;
+        break;
       case "invincible":
         player.invincible = true;
-        return setTimeout(() => {
-          player.invincible = false;
-          shouldPlayerColorReset(player);
-        }, 5000);
+        player.playerColor = this.color;
+        break;
       case "freeze":
-        return setTimeout(() => {
-          shouldPlayerColorReset(player);
-        }, 5000);
-      default:
         break;
     }
+
+    // ✅ Apply effect ONLY to the player who touches the bonus
+    const { addEffectToPlayer } = useBonusStore.getState();
+    addEffectToPlayer(player, this.effect, 5000);
   }
 
   destroy() {

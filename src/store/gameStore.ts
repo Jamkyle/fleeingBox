@@ -9,7 +9,7 @@ interface GameState {
   bestScore: number;
   freeze: boolean;
   invincible: boolean;
-  players: Perso[]; // You can replace `any` with the actual type
+  players: Perso[];
   blocks: Block[];
   bonus: Bonus[];
   stagEffect: effect[];

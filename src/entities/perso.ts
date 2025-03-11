@@ -14,6 +14,7 @@ interface PersoProps extends IScreenElement {
 }
 export default class Perso extends ScreenElement {
   playerColor = "#f22";
+  defaultColor = "#f22";
   delete: boolean;
   velocity: number;
   name: string;
@@ -21,6 +22,7 @@ export default class Perso extends ScreenElement {
   invincible: boolean = false;
   die;
   cmd: KeysParams;
+  id: string = crypto.randomUUID();
 
   constructor({
     position,
@@ -34,6 +36,7 @@ export default class Perso extends ScreenElement {
   }: PersoProps) {
     super({ position, speed, size });
     this.playerColor = playerColor;
+    this.defaultColor = playerColor;
     this.delete = false;
     this.die = die;
     this.velocity = 0;
@@ -85,7 +88,7 @@ export default class Perso extends ScreenElement {
 
   destroy() {
     if (!this.invincible) {
-      this.die(this.name);
+      this.die(this.id);
       this.delete = true;
     }
   }

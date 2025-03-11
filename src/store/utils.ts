@@ -1,11 +1,16 @@
 import Perso from "../entities/perso";
-import { useGameStore } from "./gameStore";
-
-const initPlayerColor = "#FFF";
+import { useBonusStore } from "./bonusStore";
 
 export function shouldPlayerColorReset(player: Perso) {
-  const stagEffect = useGameStore.getState().stagEffect;
-  if (!stagEffect.length) {
-    player.playerColor = initPlayerColor;
+  const playerState = useBonusStore
+    .getState()
+    .playersState.find((p) => player.id === p.id);
+
+  console.log("player state", playerState);
+  if (
+    !playerState?.invincible &&
+    !((playerState?.speed || 3) > (playerState?.defaultSpeed || 3))
+  ) {
+    player.playerColor = player.defaultColor;
   }
 }
